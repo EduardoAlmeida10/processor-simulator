@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+
+#define MEM_SIZE 65536
 
 // criação e inicialização das variaveis
 typedef struct CPU{
@@ -11,7 +14,34 @@ typedef struct CPU{
 }CPU;
 
 CPU cpu = { {0}, 0x0000, 0x0000, 0x82000000, 0, 0, 0, 0 };
+uint16_t memory[MEM_SIZE];
+
+// leitura do arquivo;
+void ReadFile(const char *nameFile){
+    char line[20]; // linhas
+
+    // armazena cada endereco e cada instrucao
+    uint16_t address, instruction;
+
+    // abre o arquivo no modo leitura
+    FILE *file = fopen(nameFile, "r");
+    if(!file){
+        printf("Error ao abrir o arquivo!");
+        exit(1);
+    }
+
+    // ira ler cada linha
+    while(fgets(line, sizeof(line), file) != NULL) {
+        // condicao que separa endereco e intrucao, e verifica se foram lidas dois parametros
+        if(sscanf(line, "%4hx: 0x%4hx", &address, &instruction) == 2){
+            // coloca na memoria o endereco e a instrucao daquele endereco
+            memory[address] = instruction;
+        }
+    }
+
+    fclose(file);
+}
 
 int main(){
-    
+    ReadFile("../instructions.txt");
 }
