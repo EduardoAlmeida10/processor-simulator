@@ -15,7 +15,7 @@ typedef struct CPU
 } CPU;
 
 CPU cpu = {{0}, 0x0000, 0x82000000, 0x0000, 0, 0, 0, 0};
-uint16_t memory[MEM_SIZE]; // fazer com 8
+uint8_t memory[MEM_SIZE]; // fazer com 8
 
 uint16_t maxAddress = 0;
 
@@ -55,7 +55,8 @@ void ReadFile(const char *nameFile)
         if (sscanf(line, "%4hx: 0x%4hx", &address, &instruction) == 2)
         {
             // coloca na memoria o endereco e a instrucao daquele endereco
-            memory[address] = instruction; // rever isso
+            memory[address] = (instruction >> 8) & 0xFF;
+            memory[address + 1] = instruction & 0xFF;
             if (address > maxAddress)
             {
                 maxAddress = address;
@@ -72,7 +73,7 @@ void executeInstru()
     while (1)
     {
 
-        cpu.IR = memory[cpu.PC];
+        cpu.IR = (memory[cpu.PC] << 8) | memory[cpu.PC + 1];
         uint8_t opcode = (cpu.IR & 0xF000) >> 12;
 
         // aqui é a instrução HALT
@@ -87,24 +88,28 @@ void executeInstru()
         }
 
         cpu.PC += 2;
+
         switch (opcode)
         {
         case 0x0: // NOP
             State();
             break;
         case 0x1: // MOV
+        {
+            uint8_t bit11 = (cpu.IR & 0x0800) >> 11;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            if (bit11)
             {
-                uint8_t bit11 = (cpu.IR & 0x0800) >> 11;
-                uint8_t Rd = (cpu.IR & 0x0700) >> 8;
-                if(bit11){
-                    uint8_t Im = (cpu.IR & 0x00FF);
-                    cpu.R[Rd] = Im;
-                }else{
-                    uint8_t Rm = (cpu.IR & 0x0007); // Registrador fonte (bits 2 a 0)
-                    cpu.R[Rd] = cpu.R[Rm];
-                }
+                uint8_t Im = (cpu.IR & 0x00FF);
+                cpu.R[Rd] = Im;
             }
-            break;
+            else
+            {
+                uint8_t Rm = (cpu.IR & 0x0007); // Registrador fonte (bits 2 a 0)
+                cpu.R[Rd] = cpu.R[Rm];
+            }
+        }
+        break;
         default:
             break;
         }
