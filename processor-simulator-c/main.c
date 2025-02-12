@@ -16,6 +16,7 @@ typedef struct CPU
 
 CPU cpu = {{0}, 0x0000, 0x82000000, 0x0000, 0, 0, 0, 0};
 uint8_t memory[MEM_SIZE]; // fazer com 8
+uint8_t memoryData[MEM_SIZE];
 
 uint16_t maxAddress = 0;
 
@@ -55,8 +56,8 @@ void ReadFile(const char *nameFile)
         if (sscanf(line, "%4hx: 0x%4hx", &address, &instruction) == 2)
         {
             // coloca na memoria o endereco e a instrucao daquele endereco
-            memory[address] = (instruction >> 8) & 0xFF;
-            memory[address + 1] = instruction & 0xFF;
+            memory[address] = instruction & 0xFF; // little endian
+            memory[address + 1] = (instruction >> 8) & 0xFF; // little endian
             if (address > maxAddress)
             {
                 maxAddress = address;
@@ -73,7 +74,7 @@ void executeInstru()
     while (1)
     {
 
-        cpu.IR = (memory[cpu.PC] << 8) | memory[cpu.PC + 1];
+        cpu.IR = memory[cpu.PC] | (memory[cpu.PC + 1] << 8); // little endian
         uint8_t opcode = (cpu.IR & 0xF000) >> 12;
 
         // aqui é a instrução HALT
@@ -105,11 +106,42 @@ void executeInstru()
             }
             else
             {
-                uint8_t Rm = (cpu.IR & 0x0007); // Registrador fonte (bits 2 a 0)
+                uint8_t Rm = (cpu.IR & 0x0007);
                 cpu.R[Rd] = cpu.R[Rm];
             }
         }
         break;
+        case 0x2:
+        {
+            uint8_t bit11 = (cpu.IR & 0x0800) >> 11;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
+
+            uint16_t address = cpu.R[Rm];
+
+            if (bit11)
+            {
+                uint16_t Im = ((cpu.IR & 0x0700) >> 3) | (cpu.IR & 0x001F);
+                
+                memoryData[address] = Im & 0xFF; // little endian
+                memoryData[address + 1] = (Im >> 8) & 0xFF; // little endian
+            }
+            else
+            {
+                memoryData[address] = cpu.R[Rn] & 0xFF; // little endian
+                memoryData[address + 1] = (cpu.R[Rn] >> 8) & 0xFF; // little endian
+            }
+        }
+        break;
+        case 0x3:
+        {
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
+
+            uint16_t address = cpu.R[Rm];
+
+            cpu.R[Rd] = memoryData[address] | (memoryData[address + 1] << 8);
+        }
         default:
             break;
         }
