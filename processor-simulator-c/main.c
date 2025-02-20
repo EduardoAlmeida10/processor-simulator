@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #define MEM_SIZE 255
+#define SP_BASE 0x8200
 
 // criação e inicialização das variaveis
 typedef struct CPU
@@ -14,11 +15,13 @@ typedef struct CPU
     int C, Ov, Z, S;
 } CPU;
 
-CPU cpu = {{0}, 0x0000, 0x82000000, 0x0000, 0, 0, 0, 0};
+CPU cpu = {{0}, 0x0000, 0x8200, 0x0000, 0, 0, 0, 0};
 uint8_t memory[MEM_SIZE];
 uint8_t memoryData[MEM_SIZE];
 uint8_t memoryAccesed[MEM_SIZE] = {0};
 uint8_t pilha[MEM_SIZE];
+
+#define SP_END (cpu.SP - SP_BASE)
 
 uint16_t maxAddress = 0;
 
@@ -57,6 +60,28 @@ void ReadFile(const char *nameFile)
     fclose(file);
 }
 
+// funcao para mostrar os estados dos registradores, do sp e pc, alem das flags e memoria de dados juntamente com a pilha
+void State()
+{
+    printf("REGISTRADORES:\n");
+    for (int i = 0; i < 8; i++)
+    {
+        printf("R%d: 0x%04X\n", i, cpu.R[i]);
+    }
+    printf("PC: 0x%04X SP: 0x%04X\n", cpu.PC, cpu.SP);
+    printf("FLAGS:\n");
+    printf("C: %d\nOv: %d\nZ: %d\nS: %d\n", cpu.C, cpu.Ov, cpu.Z, cpu.S);
+    printf("MEMORIA DE DADOS:\n");
+    for (int i = 0; i < MEM_SIZE; i++)
+    {
+        if (memoryAccesed[i])
+        {
+            printf("0x%04X: 0x%04X\n", i, memoryData[i]);
+        }
+    }
+    printf("PILHA:\n"); // fazer
+}
+
 // funcao que executa as instrucoes do arquivo
 void executeInstru()
 {
@@ -68,7 +93,7 @@ void executeInstru()
         uint8_t opcode = (cpu.IR & 0xF000) >> 12;
 
         // aqui é a instrução HALT
-        if (opcode == 0xF)
+        if (cpu.IR == 0xFFFF)
         {
             break;
         }
@@ -134,7 +159,9 @@ void executeInstru()
 
             cpu.R[Rd] = cpu.R[Rm] + cpu.R[Rn];
 
-            if (cpu.R[Rd] > 0xFFFF)
+            uint32_t result = cpu.R[Rm] + cpu.R[Rn];
+
+            if (result > 0xFFFF)
             {
                 cpu.C = 1;
             }
@@ -172,7 +199,9 @@ void executeInstru()
 
             cpu.R[Rd] = cpu.R[Rm] - cpu.R[Rn];
 
-            if (cpu.R[Rd] > 0xFFFF)
+            uint32_t result = cpu.R[Rm] - cpu.R[Rn];
+
+            if (result > 0xFFFF)
             {
                 cpu.C = 1;
             }
@@ -210,7 +239,9 @@ void executeInstru()
 
             cpu.R[Rd] = cpu.R[Rm] * cpu.R[Rn];
 
-            if (cpu.R[Rd] > 0xFFFF)
+            uint32_t result = cpu.R[Rm] * cpu.R[Rn];
+
+            if (result > 0xFFFF)
             {
                 cpu.C = 1;
             }
@@ -387,24 +418,6 @@ void executeInstru()
             break;
         }
 
-        // if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0001) // PSH
-        // {
-        //     uint16_t Rn = (cpu.IR & 0x001C) >> 2;
-
-        //     cpu.SP -= 2;
-        //     pilha[cpu.SP] = cpu.R[Rn] & 0xFF;
-        //     pilha[cpu.SP + 1] = (cpu.R[Rn] & 0xFF) >> 8;
-        // }
-
-        // if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0002) // POP
-        // {
-        //     uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-
-        //     cpu.R[Rd] = pilha[cpu.SP] | (pilha[cpu.SP + 1] << 8);
-
-        //     cpu.SP += 2;
-        // }
-
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0003) // CMP
         {
             uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
@@ -413,36 +426,68 @@ void executeInstru()
             int16_t result = cpu.R[Rm] - cpu.R[Rn];
 
             cpu.Z = (result == 0) ? 1 : 0;
-            cpu.C = (cpu.R[Rm] < cpu.R[Rn]) ? 1 : 0;
+            cpu.S = (cpu.R[Rm] < cpu.R[Rn]) ? 1 : 0;
         }
 
+        // Instrucoes da pilha/desvio
+        if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0001) // PSH
+        {
+            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+
+            cpu.SP -= 2;
+            
+            pilha[SP_END] = cpu.R[Rn] & 0x00FF;
+            pilha[SP_END + 1] = (cpu.R[Rn] & 0xFF00) >> 8;
+        }
+
+        if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0002) // POP
+        {
+            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
+
+            cpu.R[Rd] = pilha[SP_END] | (pilha[SP_END + 1] << 8);
+
+            cpu.SP += 2;
+        }
+
+        if ((cpu.IR & 0xF000) == 0x0000 && (cpu.IR & 0x0800) == 0x0800) // desvio
+        {
+            uint16_t Im = (cpu.IR & 0x01FF) >> 2;
+
+            uint8_t type = (cpu.IR & 0x0003);
+
+            if (type == 0x0) // JMP
+            {
+                cpu.PC += Im;
+            }
+            else if (type == 0x1) // JEQ
+            {
+                if (cpu.Z == 1 && cpu.S == 0)
+                {
+                    cpu.PC += Im;
+                }
+            }
+            else if (type == 0x2) // JLT
+            {
+                if (cpu.Z == 0 && cpu.S == 1)
+                {
+                    cpu.PC += Im;
+                }
+            }
+            else if (type == 0x3) // JGT
+            {
+                if (cpu.Z == 0 && cpu.S == 0)
+                {
+                    cpu.PC += Im;
+                }
+            }
+        }
+
+        // Para a execucao quando o pc é maior que o ultimo endereco
         if (cpu.PC > maxAddress)
         {
             break;
         }
     }
-}
-
-// funcao para mostrar os estados dos registradores, do sp e pc, alem das flags e memoria de dados juntamente com a pilha
-void State()
-{
-    printf("REGISTRADORES:\n");
-    for (int i = 0; i < 8; i++)
-    {
-        printf("R%d: 0x%04X\n", i, cpu.R[i]);
-    }
-    printf("PC: 0x%04X SP: 0x%08X\n", cpu.PC, cpu.SP);
-    printf("FLAGS:\n");
-    printf("C: %d\nOv: %d\nZ: %d\nS: %d\n", cpu.C, cpu.Ov, cpu.Z, cpu.S);
-    printf("MEMORIA DE DADOS:\n");
-    for (int i = 0; i < MEM_SIZE; i++)
-    {
-        if (memoryAccesed[i])
-        {
-            printf("0x%04X: 0x%04X\n", i, memoryData[i]);
-        }
-    }
-    printf("PILHA:\n"); // fazer
 }
 
 int main()
