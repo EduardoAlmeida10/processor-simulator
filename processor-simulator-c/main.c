@@ -72,14 +72,19 @@ void State()
     printf("FLAGS:\n");
     printf("C: %d\nOv: %d\nZ: %d\nS: %d\n", cpu.C, cpu.Ov, cpu.Z, cpu.S);
     printf("MEMORIA DE DADOS:\n");
-    for (int i = 0; i < MEM_SIZE; i++)
+    for (int i = 0; i < MEM_SIZE; i += 1)
     {
         if (memoryAccesed[i])
         {
-            printf("0x%04X: 0x%04X\n", i, memoryData[i]);
+            uint16_t value = memoryData[i] | (memoryData[i + 1] << 8);
+            printf("0x%04X: 0x%04X\n", i, value);
         }
     }
-    printf("PILHA:\n"); // fazer
+    printf("PILHA:\n");
+    for (size_t i = 0; i < MEM_SIZE; i++)
+    {
+        /* code */
+    }
 }
 
 // funcao que executa as instrucoes do arquivo
@@ -124,19 +129,19 @@ void executeInstru()
         break;
         case 0x2: // STORE checked
         {
-            uint16_t bit11 = (cpu.IR & 0x0800) >> 11;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t bit11 = (cpu.IR & 0x0800) >> 11;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
 
             if (bit11)
             {
-                uint16_t Im = ((cpu.IR & 0x0700) >> 3) | (cpu.IR & 0x001F);
+                uint8_t Im = ((cpu.IR & 0x0700) >> 3) | (cpu.IR & 0x001F);
 
                 memoryData[cpu.R[Rm]] = Im;
                 memoryAccesed[cpu.R[Rm]] = 1;
             }
             else
             {
-                uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+                uint8_t Rn = (cpu.IR & 0x001C) >> 2;
                 memoryData[cpu.R[Rm]] = cpu.R[Rn] & 0xFF;
                 memoryData[cpu.R[Rm] + 1] = (cpu.R[Rn] >> 8) & 0xFF;
                 memoryAccesed[cpu.R[Rm]] = 1;
@@ -145,9 +150,8 @@ void executeInstru()
         break;
         case 0x3: // LOAD checked
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
             cpu.R[Rd] = memoryData[cpu.R[Rm]] | (memoryData[cpu.R[Rm] + 1] << 8);
         }
         break;
@@ -435,7 +439,7 @@ void executeInstru()
             uint16_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.SP -= 2;
-            
+
             pilha[SP_END] = cpu.R[Rn] & 0x00FF;
             pilha[SP_END + 1] = (cpu.R[Rn] & 0xFF00) >> 8;
         }
