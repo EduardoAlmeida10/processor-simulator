@@ -97,12 +97,20 @@ void executeInstru()
         cpu.PC += 2;
         uint8_t opcode = (cpu.IR & 0xF000) >> 12;
 
-        // aqui é a instrução HALT
+        // instrucao HALT
         if (cpu.IR == 0xFFFF)
         {
             break;
         }
 
+        // instrucao invalida
+        if ((cpu.IR & 0xF800) >> 11 == 0 && (cpu.IR & 0x0003) == 0 &&
+            (cpu.IR & 0x00FC) >> 2 != 0)
+        {
+            break;
+        }
+
+        // instrucao de NOP
         if (cpu.IR == 0x0000)
         {
             State();
