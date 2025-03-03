@@ -20,6 +20,7 @@ uint8_t memory[MEM_SIZE];
 uint8_t memoryData[MEM_SIZE];
 uint8_t memoryAccesed[MEM_SIZE] = {0};
 uint8_t pilha[MEM_SIZE];
+// uint8_t pilhaAccesed[MEM_SIZE] = {0};
 
 #define SP_END (cpu.SP - SP_BASE)
 
@@ -81,10 +82,15 @@ void State()
         }
     }
     printf("PILHA:\n");
-    for (size_t i = 0; i < MEM_SIZE; i++)
-    {
-        /* code */
-    }
+    // for (uint32_t i = cpu.PC; i > 0; i += 2)
+    // {
+
+    //     if (pilhaAccesed[SP_END])
+    //     {
+    //         uint16_t value = pilha[SP_END] | (pilha[SP_END + 1] << 8);
+    //         printf("0x%04X: 0x%04X\n", i, value);
+    //     }
+    // }
 }
 
 // funcao que executa as instrucoes do arquivo
@@ -450,6 +456,8 @@ void executeInstru()
 
             pilha[SP_END] = cpu.R[Rn] & 0x00FF;
             pilha[SP_END + 1] = (cpu.R[Rn] & 0xFF00) >> 8;
+            // pilhaAccesed[SP_END] = 1;
+            // printf("%04hx: %04hx\n", SP_END, pilhaAccesed[SP_END]);
         }
 
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0002) // POP
@@ -463,19 +471,32 @@ void executeInstru()
 
         if ((cpu.IR & 0xF000) == 0x0000 && (cpu.IR & 0x0800) == 0x0800) // desvio
         {
-            uint16_t Im = (cpu.IR & 0x01FF) >> 2;
+            uint16_t Im = (cpu.IR & 0x07FC) >> 2;
+
+            if (Im & 0x0100)
+            {
+                Im |= 0xFE00;
+            }
 
             uint8_t type = (cpu.IR & 0x0003);
 
             if (type == 0x0) // JMP
             {
                 cpu.PC += Im;
+                if (cpu.PC == maxAddress)
+                {
+                    break;
+                }
             }
             else if (type == 0x1) // JEQ
             {
                 if (cpu.Z == 1 && cpu.S == 0)
                 {
                     cpu.PC += Im;
+                    if (cpu.PC == maxAddress)
+                    {
+                        break;
+                    }
                 }
             }
             else if (type == 0x2) // JLT
@@ -483,6 +504,10 @@ void executeInstru()
                 if (cpu.Z == 0 && cpu.S == 1)
                 {
                     cpu.PC += Im;
+                    if (cpu.PC == maxAddress)
+                    {
+                        break;
+                    }
                 }
             }
             else if (type == 0x3) // JGT
@@ -490,6 +515,10 @@ void executeInstru()
                 if (cpu.Z == 0 && cpu.S == 0)
                 {
                     cpu.PC += Im;
+                    if (cpu.PC == maxAddress)
+                    {
+                        break;
+                    }
                 }
             }
         }
