@@ -82,15 +82,16 @@ void State()
         }
     }
     printf("PILHA:\n");
-    // for (uint32_t i = cpu.PC; i > 0; i += 2)
-    // {
+    while(cpu.SP < 0);
+    {
+        cpu.SP -= 2;
 
-    //     if (pilhaAccesed[SP_END])
-    //     {
-    //         uint16_t value = pilha[SP_END] | (pilha[SP_END + 1] << 8);
-    //         printf("0x%04X: 0x%04X\n", i, value);
-    //     }
-    // }
+        uint16_t value = pilha[SP_END] | (pilha[SP_END + 1] << 8);
+        if (value != 0)
+        {
+            printf("0x%04X: 0x%04X\n", cpu.SP, value);
+        }
+    }
 }
 
 // funcao que executa as instrucoes do arquivo
@@ -456,8 +457,10 @@ void executeInstru()
 
             pilha[SP_END] = cpu.R[Rn] & 0x00FF;
             pilha[SP_END + 1] = (cpu.R[Rn] & 0xFF00) >> 8;
-            // pilhaAccesed[SP_END] = 1;
-            // printf("%04hx: %04hx\n", SP_END, pilhaAccesed[SP_END]);
+
+            // printf("0x%04hX\n", SP_END);
+            // printf("0x%04hX\n", pilha[0xFFFE]);
+            // printf("0x%04hX\n", cpu.SP + 1);
         }
 
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0002) // POP
