@@ -128,8 +128,8 @@ void executeInstru()
         {
         case 0x1: // MOV checked
         {
-            uint16_t bit11 = (cpu.IR & 0x0800) >> 11;
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t bit11 = (cpu.IR & 0x0800) >> 11;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
 
             if (bit11)
             {
@@ -138,7 +138,7 @@ void executeInstru()
             }
             else
             {
-                uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
+                uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
                 cpu.R[Rd] = cpu.R[Rm];
             }
         }
@@ -173,9 +173,9 @@ void executeInstru()
         break;
         case 0x4: // ADD
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.R[Rd] = cpu.R[Rm] + cpu.R[Rn];
 
@@ -220,9 +220,9 @@ void executeInstru()
         break;
         case 0x5: // SUB
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.R[Rd] = cpu.R[Rm] - cpu.R[Rn];
 
@@ -266,9 +266,9 @@ void executeInstru()
         break;
         case 0x6: // MUL
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.R[Rd] = cpu.R[Rm] * cpu.R[Rn];
 
@@ -313,9 +313,9 @@ void executeInstru()
         break;
         case 0x7: // AND
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.R[Rd] = cpu.R[Rm] & cpu.R[Rn];
 
@@ -340,9 +340,9 @@ void executeInstru()
         break;
         case 0x8: // ORR
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.R[Rd] = cpu.R[Rm] | cpu.R[Rn];
 
@@ -367,8 +367,8 @@ void executeInstru()
         break;
         case 0x9: // NOT
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
 
             cpu.R[Rd] = ~cpu.R[Rm];
 
@@ -393,9 +393,9 @@ void executeInstru()
         break;
         case 0xA: // XOR
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.R[Rd] = cpu.R[Rm] ^ cpu.R[Rn];
 
@@ -420,9 +420,9 @@ void executeInstru()
         break;
         case 0xB:
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Im = cpu.IR & 0x001F;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Im = cpu.IR & 0x001F;
 
             cpu.R[Rd] = cpu.R[Rm] >> Im;
         }
@@ -430,25 +430,25 @@ void executeInstru()
         case 0xC:
         {
             uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Im = cpu.IR & 0x001F;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Im = cpu.IR & 0x001F;
 
             cpu.R[Rd] = cpu.R[Rm] << Im;
         }
         break;
         case 0xD:
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t LSB = cpu.R[Rm] & 0x0001;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t LSB = cpu.R[Rm] & 0x0001;
 
             cpu.R[Rd] = (cpu.R[Rm] >> 1) | (LSB << 15);
         }
         break;
         case 0xE:
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
             uint16_t MSB = (cpu.R[Rm] & 0x8000) >> 15;
 
             cpu.R[Rd] = (cpu.R[Rm] << 1) | MSB;
@@ -460,19 +460,17 @@ void executeInstru()
 
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0003) // CMP
         {
-            uint16_t Rm = (cpu.IR & 0x00E0) >> 5;
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rm = (cpu.IR & 0x00E0) >> 5;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
-            int16_t result = cpu.R[Rm] - cpu.R[Rn];
-
-            cpu.Z = (result == 0) ? 1 : 0;
+            cpu.Z = (cpu.R[Rm] == cpu.R[Rn]) ? 1 : 0;
             cpu.S = (cpu.R[Rm] < cpu.R[Rn]) ? 1 : 0;
         }
 
         // Instrucoes da pilha/desvio
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0001) // PSH
         {
-            uint16_t Rn = (cpu.IR & 0x001C) >> 2;
+            uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
             cpu.SP -= 2;
 
@@ -483,7 +481,7 @@ void executeInstru()
 
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0002) // POP
         {
-            uint16_t Rd = (cpu.IR & 0x0700) >> 8;
+            uint8_t Rd = (cpu.IR & 0x0700) >> 8;
 
             cpu.R[Rd] = pilha[SP_END] | (pilha[SP_END + 1] << 8);
 
