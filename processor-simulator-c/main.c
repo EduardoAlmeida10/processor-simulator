@@ -83,7 +83,7 @@ void State()
         }
     }
     printf("PILHA:\n");
-    while(cpu.SP > 0x8100)
+    while (cpu.SP > 0x8100)
     {
         cpu.SP -= 2;
 
@@ -190,7 +190,14 @@ void executeInstru()
                 cpu.C = 0;
             }
 
-            // Overflow
+            if (((cpu.R[Rm] & 0x8000) == (cpu.R[Rn] & 0x8000)) && ((cpu.R[Rd] & 0x8000) != (cpu.R[Rm] & 0x8000)))
+            {
+                cpu.Ov = 1;
+            }
+            else
+            {
+                cpu.Ov = 0;
+            }
 
             if (cpu.R[Rd] == 0)
             {
@@ -219,9 +226,7 @@ void executeInstru()
 
             cpu.R[Rd] = cpu.R[Rm] - cpu.R[Rn];
 
-            uint32_t result = cpu.R[Rm] - cpu.R[Rn];
-
-            if (result > 0xFFFF)
+            if (cpu.R[Rm] < cpu.R[Rn])
             {
                 cpu.C = 1;
             }
@@ -230,7 +235,15 @@ void executeInstru()
                 cpu.C = 0;
             }
 
-            // Overflow
+            if (((cpu.R[Rm] & 0x8000) == 0 && (cpu.R[Rn] & 0x8000) != 0 && (cpu.R[Rd] & 0x8000) != 0) ||
+                ((cpu.R[Rm] & 0x8000) != 0 && (cpu.R[Rn] & 0x8000) == 0 && (cpu.R[Rd] & 0x8000) == 0))
+            {
+                cpu.Ov = 1;
+            }
+            else
+            {
+                cpu.Ov = 0;
+            }
 
             if (cpu.R[Rd] == 0)
             {
@@ -270,7 +283,14 @@ void executeInstru()
                 cpu.C = 0;
             }
 
-            // Overflow
+            if (result > 0xFFFF)
+            {
+                cpu.Ov = 1;
+            }
+            else
+            {
+                cpu.Ov = 0;
+            }
 
             if (cpu.R[Rd] == 0)
             {
