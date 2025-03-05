@@ -85,13 +85,14 @@ void State()
     printf("PILHA:\n");
     while (cpu.SP > 0x8100)
     {
-        cpu.SP -= 2;
 
         uint16_t value = pilha[SP_END] | (pilha[SP_END + 1] << 8);
         if (pilhaAccesed[SP_END])
         {
             printf("0x%04X: 0x%04X\n", cpu.SP, value);
         }
+
+        cpu.SP -= 2;
     }
 }
 
@@ -472,20 +473,18 @@ void executeInstru()
         {
             uint8_t Rn = (cpu.IR & 0x001C) >> 2;
 
-            cpu.SP -= 2;
-
             pilha[SP_END] = cpu.R[Rn] & 0x00FF;
             pilha[SP_END + 1] = (cpu.R[Rn] & 0xFF00) >> 8;
             pilhaAccesed[SP_END] = true;
+            cpu.SP -= 2;
         }
 
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0002) // POP
         {
+            cpu.SP += 2;
             uint8_t Rd = (cpu.IR & 0x0700) >> 8;
 
             cpu.R[Rd] = pilha[SP_END] | (pilha[SP_END + 1] << 8);
-
-            cpu.SP += 2;
         }
 
         if ((cpu.IR & 0xF000) == 0x0000 && (cpu.IR & 0x0800) == 0x0800) // desvio
