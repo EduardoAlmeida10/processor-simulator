@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define MEM_SIZE 255
 #define SP_BASE 0x8200
@@ -19,8 +20,8 @@ CPU cpu = {{0}, 0x0000, 0x8200, 0x0000, 0, 0, 0, 0};
 uint8_t memory[MEM_SIZE];
 uint8_t memoryData[MEM_SIZE];
 uint8_t memoryAccesed[MEM_SIZE] = {0};
-uint8_t pilha[MEM_SIZE];
-// uint8_t pilhaAccesed[MEM_SIZE] = {0};
+uint8_t pilha[255];
+bool pilhaAccesed[MEM_SIZE] = {false};
 
 #define SP_END (cpu.SP - SP_BASE)
 
@@ -82,12 +83,12 @@ void State()
         }
     }
     printf("PILHA:\n");
-    while(cpu.SP < 0);
+    while(cpu.SP > 0x8100)
     {
         cpu.SP -= 2;
 
         uint16_t value = pilha[SP_END] | (pilha[SP_END + 1] << 8);
-        if (value != 0)
+        if (pilhaAccesed[SP_END])
         {
             printf("0x%04X: 0x%04X\n", cpu.SP, value);
         }
@@ -457,10 +458,7 @@ void executeInstru()
 
             pilha[SP_END] = cpu.R[Rn] & 0x00FF;
             pilha[SP_END + 1] = (cpu.R[Rn] & 0xFF00) >> 8;
-
-            // printf("0x%04hX\n", SP_END);
-            // printf("0x%04hX\n", pilha[0xFFFE]);
-            // printf("0x%04hX\n", cpu.SP + 1);
+            pilhaAccesed[SP_END] = true;
         }
 
         if ((cpu.IR & 0xF800) == 0x0000 && (cpu.IR & 0x0003) == 0x0002) // POP
